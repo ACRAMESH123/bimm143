@@ -1,0 +1,63 @@
+---
+title: "Class 9: Structural Bioinformatics pt 1"
+author: "Achyuta (PID: A16956100)"
+format: pdf
+---
+
+The main database for structural data is called the PDB (Protein Data Bank). Lets see what it contains.
+
+
+I need to remove the comma and convert to numeric to do math:
+```{r}
+stats <- read.csv("pdb_stats.csv")
+as.numeric(sub(",", "", stats$Total))
+stats
+
+
+```
+
+I could turn this into a function to fix the whole table or any future table I read like this:
+```{r}
+comma2numeric <- function(x) {
+  as.numeric(sub(",", "", x))
+}
+```
+
+```{r}
+apply(stats, 2, comma2numeric)
+```
+
+```{r}
+library(readr)
+pdbdb <- read_csv("pdb_stats.csv")
+```
+
+
+```{r}
+sum(pdbdb$Total)
+```
+
+```{r}
+sum(pdbdb$`X-ray`)/sum(pdbdb$Total) * 100
+sum(pdbdb$EM)/sum(pdbdb$Total) * 100
+
+```
+> Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+84.5% for X-ray and 8.7% for electron microscopy.
+
+```{r}
+sum(pdbdb$Total)
+pdbdb$Total[1]/sum(pdbdb$Total) * 100
+```
+
+
+> Q2: What proportion of structures in the PDB are protein?
+86.65%%
+
+
+
+##Mol*
+
+PDB code: 1hsg
+
+![](1HSG.png)

@@ -1,0 +1,218 @@
+---
+title: "Class 9: Structural Bioinformatics pt 1"
+author: "Achyuta (PID: A16956100)"
+format: html
+---
+
+The main database for structural data is called the PDB (Protein Data Bank). Lets see what it contains.
+
+
+I need to remove the comma and convert to numeric to do math:
+```{r}
+stats <- read.csv("pdb_stats.csv")
+as.numeric(sub(",", "", stats$Total))
+stats
+
+
+```
+
+I could turn this into a function to fix the whole table or any future table I read like this:
+```{r}
+comma2numeric <- function(x) {
+  as.numeric(sub(",", "", x))
+}
+```
+
+```{r}
+apply(stats, 2, comma2numeric)
+```
+
+```{r}
+library(readr)
+pdbdb <- read_csv("pdb_stats.csv")
+```
+
+
+```{r}
+sum(pdbdb$Total)
+```
+
+```{r}
+sum(pdbdb$`X-ray`)/sum(pdbdb$Total) * 100
+sum(pdbdb$EM)/sum(pdbdb$Total) * 100
+
+```
+> Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+84.5% for X-ray and 8.7% for electron microscopy.
+
+```{r}
+sum(pdbdb$Total)
+pdbdb$Total[1]/sum(pdbdb$Total) * 100
+```
+
+
+> Q2: What proportion of structures in the PDB are protein?
+86.65%%
+
+> Q3: Type HIV in the PDB website search box on the home page and determine how many HIV-1 protease structures are in the current PDB?
+5
+
+##Mol*
+
+PDB code: 1hsg
+
+![A first image from molstar](1HSG.png)
+
+![Another image from molstar](1HSG (1).png)
+
+
+## The Bio3d package
+
+The bio3d package allows us to do all sorts of structural bioinformatics work in R. 
+
+Let's start with how it can read these PDB files:
+
+```{r}
+library(bio3d)
+```
+
+
+```{r}
+pdb <- read.pdb("1hsg")
+pdb
+```
+> Q4: Water molecules normally have 3 atoms. Why do we see just one atom per water molecule in this structure?
+It helps to simplify the image so all of the parts are not overwhelming.
+> Q5: There is a critical “conserved” water molecule in the binding site. Can you identify this water molecule? What residue number does this water molecule have.
+This is water #308.
+> Q7: [Optional] As you have hopefully observed HIV protease is a homodimer (i.e. it is composed of two identical chains). With the aid of the graphic display can you identify secondary structure elements that are likely to only form in the dimer rather than the monomer?
+There are a lot of hydrogen bonds that are formed between each of the two monomers. Therefore, if there was just one monomer by itself, these hydrogen bonds would be unable to form.
+
+
+```{r}
+attributes(pdb)
+```
+
+```{r}
+head(pdb$atom)
+pdbseq(pdb)[25]
+sum(pdb$calpha)
+```
+
+> Q7: How many amino acid residues are there in this pdb object? 
+198
+
+```{r}
+unique(pdb$atoms$chain)
+```
+
+> Q8: Name one of the two non-protein residues? 
+HOH and MK1
+
+> Q9: How many protein chains are in this structure?
+2
+
+
+Let's do a bioinformatics prediction of functional motions - i.e. the movement that one of these molecules needs to make to do its stuff.
+
+```{r}
+adk <- read.pdb("6s36")
+adk
+```
+
+```{r}
+m <- nma(adk)
+plot(m)
+```
+Write out multi-model PDB file that we can use to make an animation of the predicted motions. 
+
+```{r}
+mktrj(m, file="adk_m7.pdb")
+```
+
+I can open this in Mol* to play the trajectory...
+
+> Q10. Which of the packages above is found only on BioConductor and not CRAN? 
+msa
+
+> Q11. Which of the above packages is not found on BioConductor or CRAN?
+bio3d-view
+
+> Q12. True or False? Functions from the devtools package can be used to install packages from GitHub and BitBucket? 
+True
+
+```{r}
+library(bio3d)
+id <- "1ake_A"
+aa <- get.seq(id)
+aa
+```
+
+
+```{r}
+#b <- blast.pdb(aa)
+#hits <- plot(b)
+```
+
+> Q13. How many amino acids are in this sequence, i.e. how long is this sequence? 
+214
+
+```{r}
+#hits <- NULL
+#hits$pdb.id <- c('1AKE_A','6S36_A','6RZE_A','3HPR_A','1E4V_A','5EJE_A','1E4Y_A','3X2S_A','6HAP_A','6HAM_A','4K46_A','3GMT_A','4PZL_A')
+```
+
+
+```{r}
+files <- get.pdb(hits$pdb.id, path="pdbs", split=TRUE, gzip=TRUE)
+```
+
+
+```{r}
+pdbs <- pdbaln(files, fit = TRUE, exefile="msa")
+ids <- basename.pdb(pdbs$id)
+
+plot(pdbs, labels=ids)
+```
+
+
+```{r}
+anno <- pdb.annotate(ids)
+unique(anno$source)
+
+anno
+```
+
+
+```{r}
+pc.xray <- pca(pdbs)
+plot(pc.xray, pc.axes=c(1,2))
+```
+```{r}
+pc1 <- mktrj(pc.xray, pc=1,file = "pc_1.pdb")
+```
+
+
+```{r}
+rd <- rmsd(pdbs)
+
+hc.rd <- hclust(dist(rd))
+grps.rd <- cutree(hc.rd, k=3)
+
+plot(pc.xray, 1:2, col="grey50", bg=grps.rd, pch=21, cex=1)
+```
+
+
+```{r}
+modes <- nma(pdbs)
+plot(modes, pdbs, col=grps.rd)
+```
+
+> Q14. What do you note about this plot? Are the black and colored lines similar or different? Where do you think they differ most and why?
+The black lines are not very similar to the colored lines, although the two colored lines are similar to each other. They differ most around residues 20-70 and 120-170, and I think this is because this is the location at which the protein changes the most when it undergoes its conformational changes.
+
+
+##Comparative analysis of Protein Structures
+
+
+

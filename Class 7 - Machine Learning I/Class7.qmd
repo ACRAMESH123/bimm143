@@ -1,0 +1,278 @@
+---
+title: "Class 7: Machine Learning I"
+author: "Achyuta (PID: A16956100)"
+format: pdf
+---
+
+Today we are going to learn how to apply different machine learning methods, beginning with clustering:
+
+The goal here is to find groups/clusters in your input data.
+
+First I will make up some data with clear groups. For this I will use the `rnorm()` function.
+
+```{r}
+rnorm(10)
+```
+
+
+```{r}
+x <- c(rnorm(30, 3), rnorm(30, -3))
+y <- rev(x)
+z <- cbind(x, y)
+plot(z)
+
+```
+```{r}
+km <- kmeans(z, 2)
+km
+```
+
+```{r}
+attributes(km)
+km$center
+km$cluster
+```
+
+```{r}
+plot(z, col = c("red", "blue"))
+plot(z, col = km$cluster)
+points(km$center, col = "blue", pch = 15, cex = 3)
+```
+
+```{r}
+km_2 <- kmeans(z, 4)
+plot(z, col = km_2$cluster)
+points(km_2$center, col = "blue", pch = 15, cex = 1)
+
+```
+
+## Hierarchical Clustering
+
+Let's take our same made-up data `z` and see how hclust works.
+```{r}
+d <- dist(z)
+hc <- hclust(d)
+hc
+plot(hc)
+abline(h=8, col = "red")
+```
+```{r}
+grps <- cutree(hc, h=8)
+grps
+```
+
+
+```{r}
+plot(z, col = grps)
+```
+
+1. PCA of UK food data
+
+Read data from UK UK on food consumption in different parts of the UK
+
+```{r}
+url <- "https://tinyurl.com/UK-foods"
+x <- read.csv(url, row.names=1)
+head(x)
+```
+> Q1. How many rows and columns are in your new data frame named x? What R functions could you use to answer this questions?
+There are 17 rows and 4 columns
+
+>Q2. Which approach to solving the ‘row-names problem’ mentioned above do you prefer and why? Is one approach more robust than another under certain circumstances?
+Generally, I would prefer the method used in this code, as it is a much simpler way of solving this issue. However, since the method involving reading the data file again is much more thorough, it would be more failsafe.
+
+```{r}
+nrow(x)
+ncol(x)
+```
+
+
+```{r}
+barplot(as.matrix(x), beside=T, col=rainbow(nrow(x)))
+```
+> Q3: Changing what optional argument in the above barplot() function results in the following plot?
+Changing beside to false causes that change. Leaving it out would have the same effect because the default setting for beside is false.
+
+```{r}
+pairs(x, col=rainbow(10), pch=16)
+```
+> Q5: Generating all pairwise plots may help somewhat. Can you make sense of the following code and resulting figure? What does it mean if a given point lies on the diagonal for a given plot?
+This plot compares the consumption of different foods in the countries, two countries at a time. Therefore, a point lying on the diagonal means that it is consumed in a similar amount in both countries on the graph.
+
+> Q6. What is the main differences between N. Ireland and the other countries of the UK in terms of this data-set?
+Northern Ireland has a lot less in `other meats` and much more in `fresh potatoes`.
+
+Its hard to see structure and trends in even this small data-set. How will we ever do this when we have big datasets with 1000s or 10s of thousands of things we are measuring ...
+
+##PCA to the rescue
+
+Let's see how PCA deals with this dataset. Main function in base R to do PCA is called `prcomp()`
+
+```{r}
+pca <- prcomp(t(x))
+summary(pca)
+attributes(pca)
+```
+> Q7. Complete the code below to generate a plot of PC1 vs PC2. The second line adds text labels over the data points.
+
+```{r}
+plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2", xlim=c(-270,500))
+text(pca$x[,1], pca$x[,2], colnames(x))
+```
+> Q8. Customize your plot so that the colors of the country names match the colors in our UK and Ireland map and table at start of this document.
+
+```{r}
+plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2", xlim=c(-270,500))
+text(pca$x[,1], pca$x[,2], colnames(x), col = c("gold", "red", "blue", "darkgreen"))
+```
+
+
+```{r}
+pca$x
+plot(pca$x[,1], pca$x[,2],
+     col=c('black', "red", "blue", "darkgreen"), pch = 16,
+     xlab= "PC1(67.4%)", ylab = "PC2 (29%)")
+```
+
+```{r}
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,1], las=2 )
+```
+
+```{r}
+par(mar=c(10, 3, 0.35, 0))
+barplot( pca$rotation[,2], las=2 )
+```
+> Q9: Generate a similar ‘loadings plot’ for PC2. What two food groups feature prominantely and what does PC2 maninly tell us about?
+The two groups that feature prominently in this plot are fresh potatoes and soft drinks. This tells us what food groups account for most of the variance in PC2.
+
+```{r}
+library(ggplot2)
+
+df <- as.data.frame(pca$x)
+df_lab <- tibble::rownames_to_column(df, "Country")
+
+# Our first basic plot
+ggplot(df_lab) + 
+  aes(PC1, PC2, col=Country) + 
+  geom_point()
+```
+
+```{r}
+ggplot(df_lab) + 
+  aes(PC1, PC2, col=Country, label=Country) + 
+  geom_hline(yintercept = 0, col="gray") +
+  geom_vline(xintercept = 0, col="gray") +
+  geom_point(show.legend = FALSE) +
+  geom_label(hjust=1, nudge_x = -10, show.legend = FALSE) +
+  expand_limits(x = c(-300,500)) +
+  xlab("PC1 (67.4%)") +
+  ylab("PC2 (28%)") +
+  theme_bw()
+```
+
+```{r}
+ld <- as.data.frame(pca$rotation)
+ld_lab <- tibble::rownames_to_column(ld, "Food")
+
+ggplot(ld_lab) +
+  aes(PC1, Food) +
+  geom_col() 
+```
+
+```{r}
+biplot(pca)
+```
+
+```{r}
+url2 <- "https://tinyurl.com/expression-CSV"
+rna.data <- read.csv(url2, row.names=1)
+head(rna.data)
+```
+
+```{r}
+nrow(rna.data)
+ncol(rna.data)
+```
+> Q10: How many genes and samples are in this data set?
+10 samples and 100 genes
+
+```{r}
+pca <- prcomp(t(rna.data), scale=TRUE)
+plot(pca$x[,1], pca$x[,2], xlab="PC1", ylab="PC2")
+```
+```{r}
+summary(pca)
+```
+
+```{r}
+plot(pca, main="Quick scree plot")
+```
+
+```{r}
+## Variance captured per PC 
+pca.var <- pca$sdev^2
+
+## Percent variance is often more informative to look at 
+pca.var.per <- round(pca.var/sum(pca.var)*100, 1)
+pca.var.per
+```
+
+```{r}
+barplot(pca.var.per, main="Scree Plot", 
+        names.arg = paste0("PC", 1:10),
+        xlab="Principal Component", ylab="Percent Variation")
+```
+
+```{r}
+colvec <- colnames(rna.data)
+colvec[grep("wt", colvec)] <- "red"
+colvec[grep("ko", colvec)] <- "blue"
+
+plot(pca$x[,1], pca$x[,2], col=colvec, pch=16,
+     xlab=paste0("PC1 (", pca.var.per[1], "%)"),
+     ylab=paste0("PC2 (", pca.var.per[2], "%)"))
+
+text(pca$x[,1], pca$x[,2], labels = colnames(rna.data), pos=c(rep(4,5), rep(2,5)))
+```
+
+```{r}
+library(ggplot2)
+
+df <- as.data.frame(pca$x)
+
+ggplot(df) + 
+  aes(PC1, PC2) + 
+  geom_point()
+```
+
+```{r}
+df$samples <- colnames(rna.data) 
+df$condition <- substr(colnames(rna.data),1,2)
+
+p <- ggplot(df) + 
+        aes(PC1, PC2, label=samples, col=condition) + 
+        geom_label(show.legend = FALSE)
+p
+```
+
+```{r}
+p + labs(title="PCA of RNASeq Data",
+       subtitle = "PC1 clealy seperates wild-type from knock-out samples",
+       x=paste0("PC1 (", pca.var.per[1], "%)"),
+       y=paste0("PC2 (", pca.var.per[2], "%)"),
+       caption="Class example data") +
+     theme_bw()
+```
+
+```{r}
+loading_scores <- pca$rotation[,1]
+
+
+gene_scores <- abs(loading_scores) 
+gene_score_ranked <- sort(gene_scores, decreasing=TRUE)
+
+top_10_genes <- names(gene_score_ranked[1:10])
+top_10_genes 
+```
+

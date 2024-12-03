@@ -1,0 +1,221 @@
+---
+title: "Class 05: Data Visualization with GGPLOT"
+author: "Achyuta (PID: A16956100)"
+format: pdf
+---
+
+## Plotting in R
+
+R has lots of ways to make plots and figures. This includes so-called **base** graphics and packages like **ggplot2**.
+
+```{r}
+plot(cars)
+```
+
+This is a **base** R plot of the in-built `cars` dataset that has only two columns:
+```{r}
+cars
+```
+
+
+>Q. How would we plot this dataset with **ggplot2**?
+
+All ggplot figure have at least 3 layers:
+- data
+- aesthetics (how the data maps to the plot)
+- geometry (how we draw the plot)
+
+Before I use any package i need t download and install iit with the `install.packages()` command.
+
+I never use `install.packages()` within my quarto document otherwise I will install the package over and over and over again - which is silly!
+
+Once a package is intalled I can load it up with the `library()` function.
+
+```{r}
+#install.packages("ggplot2")
+library(ggplot2)
+ggplot(cars) +
+  aes(x=speed, y=dist) +
+  geom_point()
+```
+
+**Key point**: For simple plots (like the one above) ggplot is more verbose (we need to do more typing) but as plots get more complicated ggplot starts to be more clear and simple than base R plot()
+
+```{r}
+p <- ggplot(cars)+
+  aes(speed,dist) +
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE)+
+  labs(title = "Stopping distance of old cars", subtitle = "From the inbuilt cars dataset") + 
+  theme_bw()
+```
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+url <- "https://bioboot.github.io/bimm143_S20/class-material/up_down_expression.txt"
+genes <- read.delim(url)
+head(genes)
+
+
+
+
+
+
+
+```
+
+Q. Use the nrow() function to find out how many genes are in this dataset. What is your answer?
+
+```{r}
+nrow(genes)
+```
+Q. Use the colnames() function and the ncol() function on the genes data frame to find out what the column names are (we will need these later) and how many columns there are. How many columns did you find?
+```{r}
+colnames(genes)
+ncol(genes)
+```
+
+Q. Use the table() function on the State column of this data.frame to find out how many ‘up’ regulated genes there are. What is your answer? 
+
+```{r}
+table(genes$State)
+```
+
+Q. Using your values above and 2 significant figures. What fraction of total genes is up-regulated in this dataset?
+
+```{r}
+round(table(genes$State)/nrow(genes), 2)
+```
+
+Q. Complete the code below to produce the following plot
+```{r}
+ggplot(genes)+
+  aes(x=Condition1, y=Condition2, col=State) + 
+  geom_point(col = "blue", alpha = 0.1)
+```
+
+Q. Nice, now add some plot annotations to the p object with the labs() function so your plot looks like the following:
+```{r}
+p + scale_colour_manual( values=c("blue","gray","red") ) + 
+  labs(title = "Gene Expression Changes upon Drug Treatment", x = "Control (no drug)", y = "Drug Treatment")+
+  theme_bw()
+```
+
+
+You can add options to executable code like this 
+
+```{r}
+url <- "https://raw.githubusercontent.com/jennybc/gapminder/master/inst/extdata/gapminder.tsv"
+
+gapminder <- read.delim(url)
+library(dplyr)
+gapminder_1957 <- gapminder %>% filter(year==1957)
+gapminder_2007 <- gapminder%>% filter(year == 2007)
+```
+
+
+
+```{r}
+ggplot(gapminder_1957)+
+  aes(x= gdpPercap, y= lifeExp, size = pop, color = continent) + 
+  geom_point(alpha = 0.7)
+  scale_size_area(max_size = 15)
+```
+
+
+```{r}
+gapminder_1957 <- gapminder %>% filter(year == 1957 | year == 2007)
+ggplot(gapminder_1957) + 
+  geom_point(aes(x = gdpPercap, y = lifeExp, color=continent,
+                 size = pop), alpha=0.7) + 
+  scale_size_area(max_size = 10) +
+  facet_wrap(~year)
+```
+
+```{r}
+length(gapminder$year)
+tail(gapminder$year, 1)
+
+gapminder_2002 <- gapminder %>% filter(year == 2002 | year == 2007)
+ggplot(gapminder_2002) + 
+  geom_point(aes(x = gdpPercap, y = lifeExp, color=continent,
+                 size = pop), alpha=0.7) + 
+  scale_size_area(max_size = 10) +
+  facet_wrap(~year)
+
+```
+
+
+```{r}
+filter(gapminder, country == 'United States', year == 1992)
+```
+What was the population of India in the last year we have data for?
+
+```{r}
+filter(gapminder, country == "India", year == 2007)
+```
+
+What countries in data set had a pop smaller than Ireland in 2007?
+```{r}
+p <-filter(gapminder, year == 2007)
+ire_pop <- filter(p, country == "Ireland")["pop"]
+less_pop <- filter(p, pop<4109086)
+nrow(less_pop)
+```
+
+
+```{r}
+gapminder_top5 <- gapminder %>% 
+  filter(year==2007) %>% 
+  arrange(desc(pop)) %>% 
+  top_n(5, pop)
+
+gapminder_top5
+```
+
+
+```{r}
+ggplot(gapminder_top5)+
+  geom_col(aes(x = reorder(country, -pop), y = pop, fill = country), col = "gray30") + 
+  guides(fill = "none")
+```
+
+```{r}
+ggplot(gapminder_top5)+
+  geom_col(aes(x = lifeExp, y = pop))
+```
+
+```{r}
+head(USArrests)
+USArrests$State <- rownames(USArrests)
+ggplot(USArrests) +
+  aes(x=reorder(State, Murder), y = Murder) + 
+  geom_point() +
+  geom_segment(aes(x=State, xend = State, y = 0, yend = Murder), color = "blue") +
+  coord_flip()
+```
+
+```{r}
+library(gapminder)
+library(gganimate)
+
+# Setup nice regular ggplot of the gapminder data
+ggplot(gapminder, aes(gdpPercap, lifeExp, size = pop, colour = country)) +
+  geom_point(alpha = 0.7, show.legend = FALSE) +
+  scale_colour_manual(values = country_colors) +
+  scale_size(range = c(2, 12)) +
+  scale_x_log10() +
+  # Facet by continent
+  facet_wrap(~continent) +
+  # Here comes the gganimate specific bits
+  labs(title = 'Year: {frame_time}', x = 'GDP per capita', y = 'life expectancy') +
+  transition_time(year) +
+  shadow_wake(wake_length = 0.1, alpha = FALSE)
+```
+
+
+
+The `echo: false` option disables the printing of code (only output is displayed).

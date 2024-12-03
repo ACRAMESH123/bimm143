@@ -1,0 +1,44 @@
+---
+title: "Class 6: R Functions"
+author: "Achyuta (PID: A16956100)"
+format: html
+---
+
+
+
+Today we are going to explore R functions and begin to think about writing our own functions.
+
+Let's start simple and write our first function to add some numbers. 
+
+Every function in R has at least 3 things:
+
+- a **name**, we pick this
+- one or more input **arguments**
+- the **body**, where the work gets done
+
+
+
+```{r}
+add <- function (x, y=1) {
+  x + y
+}
+```
+
+
+
+Now lets try it out
+
+
+
+```{r}
+add(c(10, 1, 1, 10),1)
+```
+
+```{r}
+add(10, 11, 12)
+```
+
+```{r}
+mean( c(10, 10, NA), na.rm=T)
+```
+

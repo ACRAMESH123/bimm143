@@ -19,9 +19,9 @@ Classwork for [BIMM143 F24](https://bioboot.github.io/bimm143_F24/) at UC San Di
 
 - Class 13: [Transcriptomics and RNA-Seq Analysis](https://github.com/ACRAMESH123/bimm143/blob/main/Class%2013/Class13.md)
 
-- Class 14: [RNA-Seq Mini-Project]()
+- Class 14: [RNA-Seq Mini-Project](https://github.com/ACRAMESH123/bimm143/blob/main/Class%2014/Class%2014%20-%20RNASeq.md)
 
-- Class 15: [Pertussis Resurgence Mini-Project]()
+- Class 15: [Pertussis Resurgence Mini-Project](https://github.com/ACRAMESH123/bimm143/blob/main/Class%2015/Class15.md)
 
 - Class 16: [UNIX for Bioinformatics]()
 

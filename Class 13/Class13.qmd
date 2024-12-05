@@ -1,7 +1,7 @@
 ---
 title: "Class 13: RNA Seq with DESeq2"
 author: "Achyuta"
-format: html
+format: gfm
 ---
 
 Today we will analyze some RNASeq data from Himes et al. on the effects of dexamethasone(dex),  asynthetic glucocorticoid steroid on airway smooth muscle cells (ASM).\

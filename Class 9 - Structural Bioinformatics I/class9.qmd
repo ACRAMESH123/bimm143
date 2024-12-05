@@ -1,7 +1,7 @@
 ---
 title: "Class 9: Structural Bioinformatics pt 1"
 author: "Achyuta (PID: A16956100)"
-format: html
+format: gfm
 ---
 
 The main database for structural data is called the PDB (Protein Data Bank). Lets see what it contains.
@@ -150,16 +150,16 @@ aa
 
 
 ```{r}
-#b <- blast.pdb(aa)
-#hits <- plot(b)
+b <- blast.pdb(aa)
+hits <- plot(b)
 ```
 
 > Q13. How many amino acids are in this sequence, i.e. how long is this sequence? 
 214
 
 ```{r}
-#hits <- NULL
-#hits$pdb.id <- c('1AKE_A','6S36_A','6RZE_A','3HPR_A','1E4V_A','5EJE_A','1E4Y_A','3X2S_A','6HAP_A','6HAM_A','4K46_A','3GMT_A','4PZL_A')
+hits <- NULL
+hits$pdb.id <- c('1AKE_A','6S36_A','6RZE_A','3HPR_A','1E4V_A','5EJE_A','1E4Y_A','3X2S_A','6HAP_A','6HAM_A','4K46_A','3GMT_A','4PZL_A')
 ```
 
 

@@ -1,6 +1,7 @@
 ---
 title: "Class 10: Halloween Mini Project"
-format: html
+format: gfm
+prefer-html: true
 ---
 
 ```{r}

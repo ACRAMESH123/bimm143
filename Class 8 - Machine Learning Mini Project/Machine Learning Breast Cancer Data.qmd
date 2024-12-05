@@ -1,7 +1,7 @@
 ---
 title: "Class 8: PCA Mini Project"
 author: "Achyuta (PID: A16956100)"
-format: pdf
+format: gfm
 ---
 
 ```{r}

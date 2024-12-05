@@ -11,3 +11,19 @@ Classwork for [BIMM143 F24](https://bioboot.github.io/bimm143_F24/) at UC San Di
 
 - Class 9: [Structural Bioinformatics I](https://github.com/ACRAMESH123/bimm143/blob/main/Class%209%20-%20Structural%20Bioinformatics%20I/Class%209_%20Structural%20Bioinformatics%20pt%201.pdf)
 
+- Class 10: []()
+
+- Class 11: []()
+
+- Class 12: []()
+
+- Class 13: []()
+
+- Class 14: []()
+
+- Class 15: []()
+
+- Class 16: []()
+
+- Class 17: []()
+

@@ -1,0 +1,275 @@
+---
+title: "Class 13: RNA Seq with DESeq2"
+author: "Achyuta"
+format: html
+---
+
+Today we will analyze some RNASeq data from Himes et al. on the effects of dexamethasone(dex),  asynthetic glucocorticoid steroid on airway smooth muscle cells (ASM).\
+
+```{r}
+counts <- read.csv("airway_scaledcounts.csv", row.names=1)
+metadata <-  read.csv("airway_metadata.csv")
+```
+
+
+
+```{r}
+nrow(counts)
+
+library(dplyr)
+controls <- metadata |>
+  filter(dex == "control") 
+
+nrow(controls)
+```
+> Q1. How many genes are in this dataset? 
+38694
+> Q2. How many ‘control’ cell lines do we have?
+4
+
+
+#Toy differential expression analysis
+
+Calculate the mean per gene count values for all control samples and all treated samples, and then compare then.
+
+> Q3. How would you make the above code in either approach more robust? Is there
+a function that could help here?
+I would generalize the mean function for any amount of samples, for which I can use the mean function.
+> Q4. Follow the same procedure for the treated samples (i.e. calculate the
+mean per gene across drug treated samples and assign to a labeled vector called
+treated.mean)
+
+1. Find all "control" values/columns in `counts`
+
+```{r}
+control.inds <- metadata$dex == "control"
+control.counts <- counts[,control.inds]
+```
+
+2. Find the mean per gene across all control columns.
+
+```{r}
+control.means <- apply(control.counts, 1, mean)
+```
+
+3. Find all "treated" values/columns in `counts`.
+```{r}
+treated.inds <- metadata$dex == "treated"
+treated.counts <- counts[,treated.inds]
+```
+
+4. Find the mean per gene across all treated columns.
+```{r}
+treated.means <- apply(treated.counts, 1, mean)
+```
+
+> Q5 (a). Create a scatter plot showing the mean of the treated samples against the
+mean of the control samples.
+
+```{r}
+meancounts <- data.frame(control.means, treated.means)
+plot(meancounts)
+```
+
+>Q5 (b).You could also use the ggplot2 package to make this figure producing the
+plot below. What geom_?() function would you use for this plot?
+geom_point()
+
+> Q6. Try plotting both axes on a log scale. What is the argument to plot() that
+allows you to do this?
+
+5. Plot control means vs treated means
+```{r}
+meancounts <- data.frame(control.means, treated.means)
+plot(meancounts, log = 'xy')
+```
+We most frequently use log2 transformations for this type of data
+
+> Q7. What is the purpose of the arr.ind argument in the which() function call
+above? Why would we then take the first column of the output and need to call
+the unique() function?
+It checks to see which entries are true. The unique() function is there to help make sure that no entries are double-counted.
+
+Let's calculate the log2 (fold-change) and add it to our `meancounts` data.frame.
+```{r}
+meancounts$log2fc <- log2(meancounts$treated.means/meancounts$control.means)
+head(meancounts)
+```
+> Q. How many genes do I have after this zero count filtering?
+21817
+
+```{r}
+to.rm <- rowSums(meancounts[,1:2] == 0) > 0
+mycounts <- meancounts[!to.rm, ]
+nrow(mycounts)
+```
+
+> Q8. How many genes are "up" regulated upon drug treatment (threshold of +2)?
+
+```{r}
+sum(mycounts$log2fc > 2)
+```
+
+
+> Q9. How many genes are "down" regulated upon drug treatment (threshold of -2)?
+
+```{r}
+sum(mycounts$log2fc < -2)
+```
+
+> Q10. Do you trust these results? Why?
+Yes, I do, as these results are only the genes that are changed by a significant amount, meaning that the change is likely associated with this drug.
+
+Missing the stats. Is the difference in the mean counts significant???
+
+Let's do this analysis the right way with stats and the **DESeq2** package.
+
+## DESeq Analysis
+
+```{r}
+#/ message: false
+library(DESeq2)
+
+```
+
+The first function that we will use will setup the data in the way DESeq wants it.
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = counts,
+                       colData = metadata,
+                       design = ~dex)
+```
+
+The function in the package is called `DeSeq()` and we can run it on our `dds` object.
+
+```{r}
+dds <- DESeq(dds)
+
+```
+```{r}
+res <- results(dds)
+head(res)
+```
+
+```{r}
+plot(res$log2FoldChange, -log(res$padj))
+abline(v = 2, col = "grey")
+abline(v = -2, col = "grey")
+abline(h = -log(0.005), col = "grey")
+
+```
+
+```{r}
+mycols <- rep("grey", nrow(res))
+mycols[res$log2FoldChange > 2] <- "pink"
+mycols[res$log2FoldChange < -2] <- "purple"
+mycols[res$padj > 0.005] <- "grey"
+
+plot(res$log2FoldChange, -log(res$padj), col = mycols)
+abline(v = 2, col = "grey")
+abline(v = -2, col = "grey")
+abline(h = -log(0.005), col = "grey")
+```
+
+Save the results to date out to disc.
+
+```{r}
+write.csv(res, file = "myresults.csv")
+```
+```{r}
+head(res)
+```
+
+```{r}
+library(AnnotationDbi)
+library(org.Hs.eg.db)
+
+columns(org.Hs.eg.db)
+```
+I will use the `mapIds()` function to "map" my identifiers to those from different databases. I will go between "ENSEMBL" and "SYMBOL" (and then after "GENENAME")
+
+```{r}
+res$symbol <- mapIds(org.Hs.eg.db,
+                     keys = rownames(res),
+                     keytype = "ENSEMBL",
+                     column = "SYMBOL")
+#head(res)
+```
+```{r}
+res$genename <- mapIds(org.Hs.eg.db,
+                       keys = rownames(res),
+                       keytype = "ENSEMBL", 
+                       column = "GENENAME")
+
+head(res)
+```
+```{r}
+res$entrezid <- mapIds(org.Hs.eg.db,
+                       keys = rownames(res),
+                       keytype = "ENSEMBL", 
+                       column = "ENTREZID")
+
+head(res)
+```
+
+```{r}
+write.csv(res, file="results_annotated.csv")
+```
+
+Now that we have our results with added annotation, we can do some pathway mapping. 
+
+Let's use the **gage** package to look for KEGG pathways in our results (genes of interest). I will also use the **pathview** package to draw little pathway figures.
+
+```{r}
+library(pathview)
+library(gage)
+library(gageData)
+
+data(kegg.sets.hs)
+
+head(kegg.sets.hs, 1)
+```
+
+What **gage** wants as input is not my big table/dataframe of results. It just wants a "vector of importance". For RNASeq data like we have, this is our log2FC values.
+
+```{r}
+foldchanges <- res$log2FoldChange
+names(foldchanges) = res$entrezid
+head(foldchanges)
+```
+
+```{r}
+keggres = gage(foldchanges, gsets = kegg.sets.hs)
+```
+
+```{r}
+attributes(keggres)
+head(keggres$less,3)
+```
+
+Let's use the pathview package to look at one of those highlighted KEGG pathways with our genes highlighted. 
+
+"hsa05310 Asthma"
+
+```{r}
+pathview(gene.data = foldchanges, pathway.id = "hsa05310")
+```
+![Asthma pathway with my DEGs](hsa05310.pathview.png)
+
+"hsa05332 Graft-versus-host disease"
+
+```{r}
+pathview(gene.data = foldchanges, pathway.id = "hsa05332")
+```
+
+![Graft-versus-host disease pathway with my DEGs](hsa05332.pathview.png)
+
+
+"hsa04940 Type I diabetes mellitus"
+
+```{r}
+pathview(gene.data = foldchanges, pathway.id = "hsa04940")
+```
+
+
+![Type I Diabetes Mellitus pathway with my DEGs](hsa04940.pathview.png)

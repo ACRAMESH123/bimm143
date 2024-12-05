@@ -1,4 +1,4 @@
-# bimm143
+# BIMM143
 Classwork for [BIMM143 F24](https://bioboot.github.io/bimm143_F24/) at UC San Diego
 
 - Class 5: [Data visualization with ggplot](https://github.com/ACRAMESH123/bimm143/blob/main/Class%205/class05.pdf)
